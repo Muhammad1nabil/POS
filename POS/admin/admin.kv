@@ -1,0 +1,292 @@
+#: import Window kivy.core.window.Window
+
+# <FlatButton@ButtonBehavior+Label>:
+#    text: 'default'
+<SpinnerOption>
+    font_name: 'utils/arial'
+<AdminWindow>:
+    id: main_win
+    orientation: 'vertical'
+    canvas.before:
+        Color:
+            rgba: (1,1,1,1)
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+    BoxLayout:
+        id: top_nav
+        size_hint_y: None
+        height: 30
+        canvas.before:
+            Color:
+                rgba: (.06, .45, .45,1)
+            Rectangle:
+                size: self.size
+                pos: self.pos
+
+        Label:
+            text: 'Admin Dashboard'
+            bold: True
+            size_hint: (.9,None)
+            height: 30
+        Button:
+            id: file_trigger
+            text: 'Logout'
+            on_release: root.logout()
+            size_hint: (.1,None)
+            height: 30
+            background_color: rgba(0.06, 0.45, 0.45, 1)
+
+    BoxLayout:
+        id: content_nav
+
+        BoxLayout:
+            id: nav_tabs
+            size_hint_x: .2
+            orientation: 'vertical'
+            spacing: 3
+            canvas.before:
+                Color:
+                    rgba: (.06, .52, .52,1)
+                Rectangle:
+                    size: self.size
+                    pos: self.pos
+
+            ToggleButton:
+                id: user_toggle
+                text: 'Manage Users'
+                size_hint_y: .1
+                state: 'down'
+                background_color: (.06, .47, .47, 1)
+                background_normal: ''
+                group: 'admin_navs'
+                on_state: root.change_screen(self)
+            ToggleButton:
+                id: products_toggle
+                text: 'Manage Products'
+                size_hint_y: .1
+                background_color: (.06, .47, .47, 1)
+                background_normal: ''
+                group: 'admin_navs'
+                on_state: root.change_screen(self)
+            ToggleButton:
+                id: customers_toggle
+                text: 'Manage Customers'
+                size_hint_y: .1
+                background_color: (.06, .47, .47, 1)
+                background_normal: ''
+                group: 'admin_navs'
+                on_state: root.change_screen(self)
+            ToggleButton:
+                id: orders_toggle
+                text: 'Manage Orders'
+                size_hint_y: .1
+                background_color: (.06, .47, .47, 1)
+                background_normal: ''
+                group: 'admin_navs'
+                on_state: root.change_screen(self)
+            ToggleButton:
+                id: analysis_toggle
+                text: 'Product Analysis'
+                size_hint_y: .1
+                background_color: (.06, .47, .47, 1)
+                background_normal: ''
+                group: 'admin_navs'
+                on_state: root.change_screen(self)
+
+            Label:
+                id: sp
+                text: ''
+                size_hint_y: .5
+        BoxLayout:
+            id: all_content
+            size_hint_x: .8
+            padding: (20,10)
+            ScreenManager:
+                id: scrn_mngr
+                Screen:
+                    id: scrn_content
+                    name: 'scrn_content'
+                    BoxLayout:
+                        orientation: 'vertical'
+                        spacing: 10
+                        ScrollView:
+                            BoxLayout:
+                                id: scrn_contents
+                        BoxLayout:
+                            id: ops_fields
+                            spacing: 10
+                            size_hint_y: None
+                            height: 35
+                        BoxLayout:
+                            id: ops_btns
+                            spacing: 10
+                            size_hint_y: None
+                            height: 45
+                            Button:
+                                id: crud_add
+                                text: 'Add User'
+                                on_release: root.add_user_fields()
+                            Button:
+                                id: crud_update
+                                text: 'Update User'
+                                on_release: root.update_user_fields()
+                            Button:
+                                id: crud_remove
+                                text: 'Remove User'
+                                on_release: root.remove_user_fields()
+                Screen:
+                    id: scrn_product_content
+                    name: 'scrn_product_content'
+                    BoxLayout:
+                        orientation: 'vertical'
+                        spacing: 10
+                        BoxLayout:
+                            id: scrn_product_contents
+                        BoxLayout:
+                            id: ops_fields_p
+                            spacing: 10
+                            size_hint_y: None
+                            height: 35
+                        BoxLayout:
+                            id: ops_btns_p
+                            spacing: 10
+                            size_hint_y: None
+                            height: 45
+                            Button:
+                                id: crud_add_p
+                                text: 'Add Product'
+                                on_release: root.add_product_fields()
+                            Button:
+                                id: crud_update_p
+                                text: 'Update Product'
+                                on_release: root.update_product_fields()
+                            Button:
+                                id: crud_remove_p
+                                text: 'Remove Product'
+                                on_release: root.remove_product_fields()
+                Screen:
+                    id: scrn_customer_content
+                    name: 'scrn_customer_content'
+                    BoxLayout:
+                        orientation: 'vertical'
+                        spacing: 10
+                        BoxLayout:
+                            id: scrn_customer_contents
+                        BoxLayout:
+                            id: ops_fields_s
+                            spacing: 10
+                            size_hint_y: None
+                            height: 35
+                        BoxLayout:
+                            id: ops_btns_s
+                            spacing: 10
+                            size_hint_y: None
+                            height: 45
+                            Button:
+                                id: crud_add_s
+                                text: 'Add Customer'
+                                on_release: root.add_customer_fields()
+                            Button:
+                                id: crud_update_s
+                                text: 'Update Customer'
+                                on_release: root.update_customer_fields()
+                            Button:
+                                id: crud_remove_s
+                                text: 'Remove Customer'
+                                on_release: root.remove_customer_fields()
+                Screen:
+                    id: scrn_orders
+                    name: 'scrn_orders'
+                    BoxLayout:
+                        orientation: 'vertical'
+                        spacing: 10
+                        BoxLayout:
+                            id: scrn_orders_contents
+                        BoxLayout:
+                            id: ops_fields_o
+                            spacing: 10
+                            size_hint_y: None
+                            height: 35
+                        BoxLayout:
+                            id: ops_btns_o
+                            spacing: 10
+                            size_hint_y: None
+                            height: 45
+                            Button:
+                                id: show_all
+                                text: 'Show details'
+                                on_release: root.show_details_fields()
+                            Button:
+                                id: crud_update_o
+                                text: 'Update Order'
+                                on_release: root.update_order_fields()
+                            Button:
+                                id: crud_remove_o
+                                text: 'Remove Order'
+                                on_release: root.remove_order_fields()
+                Screen:
+                    id: scrn_order_details
+                    name: 'scrn_order_details'
+                    BoxLayout:
+                        orientation: 'vertical'
+                        spacing: 10
+                        BoxLayout:
+                            id: scrn_order_d_contents
+                        BoxLayout:
+                            id: ops_fields_d
+                            spacing: 10
+                            size_hint_y: None
+                            height: 35
+                        BoxLayout:
+                            id: ops_btns_d
+                            spacing: 10
+                            size_hint_y: None
+                            height: 45
+                            Button:
+                                id: back_to_orders
+                                text: 'Back to Orders'
+                                on_release: root.show_all_orders()
+                            Button:
+                                id: crud_add_d
+                                text: 'Add Order Details'
+                                on_release: root.add_details_fields()
+                            Button:
+                                id: crud_update_d
+                                text: 'Update Order Details'
+                                on_release: root.update_details_fields()
+                            Button:
+                                id: crud_remove_d
+                                text: 'Remove Order Details'
+                                on_release: root.remove_details_fields()
+                Screen:
+                    id: scrn_analysis
+                    name: 'scrn_analysis'
+                    BoxLayout:
+                        orientation: 'vertical'
+                        spacing: 10
+                        BoxLayout:
+                            id: ops_fields_stats
+                            spacing: 10
+                            size_hint_y: None
+                            height: 35
+                        BoxLayout:
+                            id: scrn_stats_contents
+                        BoxLayout:
+                            id: ops_btns_stats
+                            spacing: 10
+                            size_hint_y: None
+                            height: 45
+                            Button:
+                                id: needed_products
+                                text: 'all products per Day'
+                                on_release: root.get_all_prod_stats_fields()
+                            Button:
+                                id: products_split
+                                text: 'Products Split per Day'
+                                on_release: root.prod_split_fields()
+                            Button:
+                                id: print_reciept
+                                text: 'Print Orders'
+                                on_release: root.print_fields   ()

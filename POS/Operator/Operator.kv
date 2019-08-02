@@ -1,0 +1,211 @@
+# <FlatButton@ButtonBehavior+Label>:
+#    font_size: 14
+<SpinnerOption>
+    font_name: 'utils/STC'
+
+<OperatorWindow>:
+    id: main_win
+    orientation: 'vertical'
+    canvas.before:
+        Color:
+            rgba: (1,1,1, 1)
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+    BoxLayout:
+        id: header
+        size_hint_y: None
+        height: 40
+        canvas.before:
+            Color:
+                rgba: (.06, .45, .45, 1)
+            Rectangle:
+                size: self.size
+                pos: self.pos
+        Label:
+            text: 'Elite Food POS'
+            size_hint_x: .8
+            bold: True
+            color: (1,1,1,1)
+        Button:
+            id: loggedin_user
+            size_hint_x: .2
+            text: 'user'
+            color: (1,1,1,1)
+            on_release: root.logout()
+            background_color: rgba(.06, .52, .52,1)
+    BoxLayout:
+        id: current
+        size_hint_y: None
+        height: 50
+        canvas.before:
+            Color:
+                rgba: (1,1,1, 1)
+            Rectangle:
+                size: self.size
+                pos: self.pos
+        Spinner:
+            id: veg_spin
+            size_hint_x: .25
+            font_name: 'utils/STC'
+            on_text: root.on_spinner_select(self.text, 'vegetables')
+        Spinner:
+            id: fruit_spin
+            size_hint_x: .25
+            font_name: 'utils/STC'
+            on_text: root.on_spinner_select(self.text, 'Fruits')
+        Spinner:
+            id: product_spin
+            size_hint_x: .25
+            font_name: 'utils/STC'
+            on_text: root.on_spinner_select(self.text, 'Products')
+        Spinner:
+            id: fastfood_spin
+            size_hint_x: .25
+            font_name: 'utils/STC'
+            on_text: root.on_spinner_select(self.text, 'Fast Food')
+    BoxLayout:
+        id: notes
+        size_hint_y: None
+        height: 30
+    BoxLayout:
+        padding: 10
+        BoxLayout:
+            id: product_details
+            orientation: "vertical"
+            size_hint_x: .8
+            spacing: 10
+
+            BoxLayout:
+                id: product_labels
+                size_hint_y: None
+                height: 40
+
+                canvas.before:
+                    Color:
+                        rgba: (.06,.45,.45, 1)
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+
+                Label:
+                    id: qtylabel
+                    size_hint_x: .1
+                    font_name: 'utils/STC'
+                Label:
+                    id: codelabel
+                    size_hint_x: .2
+                    font_name: 'utils/STC'
+                Label:
+                    id: disclabel
+                    size_hint_x: .1
+                    font_name: 'utils/STC'
+                Label:
+                    id: pricelabel
+                    size_hint_x: .2
+                    font_name: 'utils/STC'
+                Label:
+                    id: noteslabel
+                    size_hint_x: .4
+                    font_name: 'utils/STC'
+
+            BoxLayout:
+                id: product_inputs
+                size_hint_y: None
+                height: 30
+                spacing: 15
+                TextInput:
+                    id: qty_inp
+                    size_hint_x: .1
+                    input_filter: "float"
+                    on_text_validate: root.update_purchases(code_inp.text)
+                    multiline: False
+                TextInput:
+                    id: code_inp
+                    size_hint_x: .2
+                    multiline: False
+                    input_filter: "int"
+                    on_text_validate: root.update_purchases(self.text)
+                    multiline: False
+                TextInput:
+                    id: disc_inp
+                    size_hint_x: .1
+                    input_filter: "float"
+                    on_text_validate: root.update_purchases(code_inp.text)
+                    multiline: False
+                Label:
+                    text: '0.0'
+                    id: price_inp
+                    size_hint_x: .2
+                    canvas.before:
+                        Color:
+                            rgba: (.06, .45,.45, 1)
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+
+                BoxLayout:
+                    id: notes_inp
+                    size_hint_x: .4
+            BoxLayout:
+                id: add_to_cart
+                orientation: 'vertical'
+                GridLayout:
+                    id: products
+                    cols: 1
+
+
+        BoxLayout:
+            id: preview
+            orientation: 'vertical'
+            size_hint_x: .2
+            TextInput:
+                id: cust_code_in
+                hint_text: 'Customer Code'
+                multiline: False
+                on_text_validate: root.check_cust(self.text)
+                size_hint_y: None
+                height: 30
+            Spinner:
+                id: cust_code_spin
+                text: 'Customer Code | delivery'
+                on_text: root.select_cust()
+                size_hint_y: None
+                height: 30
+            TextInput:
+                id: receipt_preview
+                readonly: True
+                text: '\n'
+                font_name: 'utils/STC'
+            BoxLayout:
+                id: remove_box
+                size_hint_y: None
+                height: 30
+
+                TextInput:
+                    id: remove_inp
+                    multiline: False
+                    size_hint_x: 0.5
+                    input_filter: "int"
+                    on_text_validate: root.remove_item()
+                Button:
+                    id: remove_btn
+                    size_hint_x: 0.5
+                    text: 'Remove'
+                    font_name: 'utils/STC'
+                    on_release: root.remove_item()
+            Button:
+                id: new_trans_button
+                text: 'Finish & New Order'
+                size_hint_y: None
+                height: 30
+                font_name: 'utils/STC'
+                on_release: root.finishtrans()
+            Button:
+                id: new_trans_button
+                text: 'Clear'
+                size_hint_y: None
+                height: 30
+                font_name: 'utils/STC'
+                on_release: root.clear_order()
