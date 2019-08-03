@@ -94,11 +94,19 @@
                 background_normal: ''
                 group: 'admin_navs'
                 on_state: root.change_screen(self)
+            ToggleButton:
+                id: print_toggle
+                text: 'Print'
+                size_hint_y: .1
+                background_color: (.06, .47, .47, 1)
+                background_normal: ''
+                group: 'admin_navs'
+                on_state: root.change_screen(self)
 
             Label:
                 id: sp
                 text: ''
-                size_hint_y: .5
+                size_hint_y: .4
         BoxLayout:
             id: all_content
             size_hint_x: .8
@@ -248,18 +256,6 @@
                                 id: back_to_orders
                                 text: 'Back to Orders'
                                 on_release: root.show_all_orders()
-                            Button:
-                                id: crud_add_d
-                                text: 'Add Order Details'
-                                on_release: root.add_details_fields()
-                            Button:
-                                id: crud_update_d
-                                text: 'Update Order Details'
-                                on_release: root.update_details_fields()
-                            Button:
-                                id: crud_remove_d
-                                text: 'Remove Order Details'
-                                on_release: root.remove_details_fields()
                 Screen:
                     id: scrn_analysis
                     name: 'scrn_analysis'
@@ -286,7 +282,21 @@
                                 id: products_split
                                 text: 'Products Split per Day'
                                 on_release: root.prod_split_fields()
-                            Button:
-                                id: print_reciept
-                                text: 'Print Orders'
-                                on_release: root.print_fields   ()
+                Screen:
+                    id: scrn_print
+                    name: 'scrn_print'
+                    BoxLayout:
+                        orientation: 'vertical'
+                        spacing: 10
+                        BoxLayout:
+                            id: ops_fields_print
+                            spacing: 10
+                            size_hint_y: None
+                            height: 35
+                        BoxLayout:
+                            id: scrn_print_contents
+                        BoxLayout:
+                            id: ops_btns_print
+                            spacing: 10
+                            size_hint_y: None
+                            height: 45

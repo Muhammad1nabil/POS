@@ -2,7 +2,6 @@ from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.lang import Builder
 import sqlite3
-
 Builder.load_file('Signin/Signin.kv')
 
 

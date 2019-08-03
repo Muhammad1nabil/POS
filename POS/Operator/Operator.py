@@ -10,7 +10,7 @@ import sqlite3
 from datetime import datetime
 from utils.datatables import DataTable
 from utils.translate import arabic_trans, Ar_text
-
+#from admin.admin import AdminWindow
 Builder.load_file('Operator/Operator.kv')
 
 
@@ -117,6 +117,7 @@ class OperatorWindow(BoxLayout):
 
     def logout(self):
         self.parent.parent.current = 'scrn_si'
+    #    AdminWindow.__init__()
 
     def killswitch(self, dtx):
         self.notify.dismiss()

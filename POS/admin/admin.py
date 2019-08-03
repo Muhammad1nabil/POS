@@ -17,6 +17,8 @@ from utils.datatables import DataTable
 from utils.translate import Ar_text, arabic_trans
 from datetime import datetime
 from docx.shared import Cm
+from Operator.Operator import OperatorWindow
+
 Builder.load_file('admin/admin.kv')
 
 
@@ -30,6 +32,16 @@ class AdminWindow(BoxLayout):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+        print_all = Button(text=arabic_trans('طباعة اجمالي المنتجات ليوم معين'), font_name='utils/STC',
+                        on_release=lambda x: self.print_all_fields())
+        print_split = Button(text=arabic_trans('طباعة تقسيمة المنتجات علي الطلبات ليوم معين'), font_name='utils/STC',
+                        on_release=lambda x: self.print_split_fields())
+        print_orders = Button(text=arabic_trans('طباعه الطلبات ليوم معين'), font_name='utils/STC',
+                        on_release=lambda x: self.print_fields())
+        self.ids.ops_btns_print.add_widget(print_all)
+        self.ids.ops_btns_print.add_widget(print_split)
+        self.ids.ops_btns_print.add_widget(print_orders)
 
         self.conn = sqlite3.connect('POS.db')
         self.cur = self.conn.cursor()
@@ -68,6 +80,33 @@ class AdminWindow(BoxLayout):
 
         # stats data
         self.current_order_id_details = ''
+
+        self.details = self.get_all_details()
+        ids = list(self.details['id'].values())
+        self.dates = list()
+        self.order_prod_ids = list()
+        self.order_prod_names = list()
+        for x in range(len(ids)):
+            if self.details['date'][x] not in self.dates:
+                self.dates.append(self.details['date'][x])
+                print(self.dates)
+            if self.details['prod_id'][x] not in self.order_prod_ids:
+                self.order_prod_ids.append(str(self.details['prod_id'][x]))
+
+                try:
+                    self.order_prod_names.append(self.prodnames[self.prod_ids.index(self.details['prod_id'][x])])
+                except():
+                    pass
+
+        product_code = []
+        product_name = []
+        query = 'SELECT * FROM PRODUCTS'
+        self.cur.execute(query)
+        products = self.cur.fetchall()
+        for product in products:
+            product_code.append(product[1])
+            name = product[2]
+            product_name.append(name)
 
     def logout(self):
         self.parent.parent.current = 'scrn_si'
@@ -478,12 +517,12 @@ class AdminWindow(BoxLayout):
     def add_customer_fields(self):
         target = self.ids.ops_fields_s
         target.clear_widgets()
-        crud_code = TextInput(hint_text='Customer Code', multiline=False)
-        crud_name = Ar_text(hint_text='Customer Name', multiline=False, font_name="utils/STC")
-        crud_phone = TextInput(hint_text='Phone', multiline=False, input_filter="int")
-        crud_address = Ar_text(hint_text='Address', multiline=False, font_name="utils/STC")
-        crud_delivery = TextInput(hint_text='Delivery', multiline=False, input_filter="float")
-        crud_submit = Button(text='Add', size_hint_x=None, width=100,
+        crud_code = TextInput(hint_text='Code', multiline=False, size_hint_x=0.1)
+        crud_name = Ar_text(hint_text='Name', multiline=False, font_name="utils/STC", size_hint_x=0.2)
+        crud_phone = TextInput(hint_text='Phone', multiline=False, input_filter="int", size_hint_x=0.2)
+        crud_address = Ar_text(hint_text='Address', multiline=False, font_name="utils/STC", size_hint_x=0.4)
+        crud_delivery = TextInput(hint_text='Delivery', multiline=False, input_filter="float", size_hint_x=0.05)
+        crud_submit = Button(text='Add', size_hint_x=0.05, width=100,
                              on_release=lambda x: self.add_cust(crud_code.text, crud_name.text, crud_phone.text,
                                                                 crud_address.text, crud_delivery.text))
 
@@ -498,12 +537,12 @@ class AdminWindow(BoxLayout):
         target = self.ids.ops_fields_s
         target.clear_widgets()
 
-        crud_code = TextInput(hint_text='Customer Code', multiline=False)
-        crud_name = Ar_text(hint_text='Customer Name', multiline=False, font_name="utils/STC")
-        crud_phone = TextInput(hint_text='Phone', multiline=False, input_filter="int")
-        crud_address = Ar_text(hint_text='Address', multiline=False, font_name="utils/STC")
-        crud_delivery = TextInput(hint_text='Delivery', multiline=False, input_filter="float")
-        crud_submit = Button(text='Update', size_hint_x=None, width=100,
+        crud_code = TextInput(hint_text='Code', multiline=False, size_hint_x=0.1)
+        crud_name = Ar_text(hint_text='Name', multiline=False, font_name="utils/STC", size_hint_x=0.2)
+        crud_phone = TextInput(hint_text='Phone', multiline=False, input_filter="int", size_hint_x=0.2)
+        crud_address = Ar_text(hint_text='Address', multiline=False, font_name="utils/STC", size_hint_x=0.4)
+        crud_delivery = TextInput(hint_text='Delivery', multiline=False, input_filter="float", size_hint_x=0.05)
+        crud_submit = Button(text='Update', size_hint_x=0.05, width=100,
                              on_release=lambda x: self.update_cust(crud_code.text, crud_name.text, crud_phone.text,
                                                                    crud_address.text, crud_delivery.text))
 
@@ -728,8 +767,7 @@ class AdminWindow(BoxLayout):
         crud_total = TextInput(hint_text='Total Price', multiline=False, input_filter="float")
         crud_notes = Ar_text(hint_text='Notes', multiline=False, font_name="utils/STC")
         crud_submit = Button(text='Update', size_hint_x=None, width=100,
-                             on_release=lambda x: self.update_order(crud_id.text, crud_code.text, crud_total.text, crud_notes.text,
-                                                                    crud_notes.text))
+                             on_release=lambda x: self.update_order(crud_id.text, crud_code.text, crud_total.text, crud_notes.text))
 
         target.add_widget(crud_id)
         target.add_widget(crud_code)
@@ -836,132 +874,15 @@ class AdminWindow(BoxLayout):
                 query = 'DELETE FROM TRANSACTIONS WHERE ID=?'
                 values = [order_id]
                 self.cur.execute(query, values)
+
+                query = 'DELETE FROM TRANS_DETAILS WHERE order_id=?'
+                self.cur.execute(query, values)
                 self.conn.commit()
 
         orders = self.get_orders()
         orderstable = DataTable(table=orders)
         content.add_widget(orderstable)
         self.remove_order_fields()
-
-    def update_details_fields(self):
-        target = self.ids.ops_fields_d
-        target.clear_widgets()
-
-        crud_id = TextInput(hint_text='Detail ID', multiline=False, input_filter="int")
-        crud_pcode = TextInput(hint_text='Product Code', multiline=False)
-        crud_price = TextInput(hint_text='Price', multiline=False, input_filter="float")
-        crud_qty = TextInput(hint_text='Quantity', multiline=False, input_filter="float")
-        crud_disc = TextInput(hint_text='Discount', multiline=False, input_filter="float")
-        crud_note = Ar_text(hint_text=arabic_trans('ملاحظات الصنف'), multiline=False, font_name="utils/STC")
-        crud_submit = Button(text='Update', size_hint_x=None, width=100,
-                             on_release=lambda x: self.update_details(crud_id.text, crud_pcode.text, crud_price.text,
-                                                                      crud_qty.text, crud_disc.text, arabic_trans(crud_note.text)))
-
-        target.add_widget(crud_id)
-        target.add_widget(crud_pcode)
-        target.add_widget(crud_price)
-        target.add_widget(crud_qty)
-        target.add_widget(crud_disc)
-        target.add_widget(crud_note)
-        target.add_widget(crud_submit)
-
-    def add_details_fields(self):
-        target = self.ids.ops_fields_d
-        target.clear_widgets()
-
-        crud_pcode = TextInput(hint_text='Product Code', multiline=False)
-        crud_price = TextInput(hint_text='Price', multiline=False, input_filter="float")
-        crud_qty = TextInput(hint_text='Quantity', multiline=False, input_filter="float")
-        crud_disc = TextInput(hint_text='Discount', multiline=False, input_filter="float")
-        crud_note = Ar_text(hint_text='Notes', multiline=False, input_filter="float", font_name='utils/STC')
-        crud_submit = Button(text='Add', size_hint_x=None, width=100,
-                             on_release=lambda x: self.add_details(crud_pcode.text, crud_price.text,
-                                                                      crud_qty.text, crud_disc.text, crud_note.text))
-
-        target.add_widget(crud_pcode)
-        target.add_widget(crud_price)
-        target.add_widget(crud_qty)
-        target.add_widget(crud_disc)
-        target.add_widget(crud_note)
-        target.add_widget(crud_submit)
-
-    def add_details(self, pcode, price, qty, disc, note):
-        content = self.ids.scrn_order_d_contents
-        content.clear_widgets()
-        if pcode == '' or price == '' or qty == '' or disc == '' or note == '':
-            self.notify.add_widget(Label(text='[color=#FF0000][b]missing data![/b][/color]', markup=True))
-            self.notify.open()
-            Clock.schedule_once(self.killswitch, 1)
-        else:
-            qty = float(qty)
-            disc = float(disc)
-            note = arabic_trans(note)
-            query = 'INSERT INTO TRANS_DETAILS(order_id, prod_id, price, quantity, discount, note, date) VALUES(?, ?, ?, ?, ?, ?, ?)'
-            values = [self.current_order_id_details, pcode, price, qty, disc, note, datetime.now().date()]
-            self.cur.execute(query, values)
-            self.conn.commit()
-
-        details = self.get_order_details(self.current_order_id_details)
-        detailstable = DataTable(table=details)
-        content.add_widget(detailstable)
-        self.update_details_fields()
-
-    def update_details(self, id, pcode, price, qty, disc, note):
-        content = self.ids.scrn_order_d_contents
-        content.clear_widgets()
-        if id == '':
-            self.notify.add_widget(Label(text='[color=#FF0000][b]Detail ID is Required![/b][/color]', markup=True))
-            self.notify.open()
-            Clock.schedule_once(self.killswitch, 1)
-        else:
-            details = dict(self.get_details(id).items())
-            ids = details.get('id')
-            orderids = details.get('order_id')
-            x = False
-            if ids is not None:
-                id = int(id)
-                idlist = list(dict(ids).values())
-                orderlist = list(dict(orderids).values())
-                index = idlist.index(id)
-                x = idlist[index] == int(id) and orderlist[index] == int(self.current_order_id_details)
-            if not x:
-                self.notify.add_widget(Label(text='[color=#FF0000][b]Invalid detail ID![/b][/color]', markup=True))
-                self.notify.open()
-                Clock.schedule_once(self.killswitch, 1)
-            else:
-                if pcode == '':
-                    codes = details.get('prod_id')
-                    codelist = list(dict(codes).values())
-                    pcode = codelist[index]
-                if price == '':
-                    prices = details.get('price')
-                    plist = list(dict(prices).values())
-                    price = plist[index]
-
-                if qty == '':
-                    qtys = details.get('price')
-                    qlist = list(dict(qtys).values())
-                    qty = qlist[index]
-
-                if disc == '':
-                    discs = details.get('discount')
-                    dlist = list(dict(discs).values())
-                    disc = dlist[index]
-
-                if note == '':
-                    notes = details.get('notes')
-                    nlist = list(dict(notes).values())
-                    note = nlist[index]
-
-                query = 'UPDATE TRANS_DETAILS SET prod_id=?, price=?, quantity=?, discount=?, note=? WHERE id=?'
-                values = [pcode, price, qty, disc, note, id]
-                self.cur.execute(query, values)
-                self.conn.commit()
-
-        details = self.get_order_details(self.current_order_id_details)
-        detailstable = DataTable(table=details)
-        content.add_widget(detailstable)
-        self.update_details_fields()
 
     def get_details(self, id):
         _order_d = OrderedDict()
@@ -1052,48 +973,6 @@ class AdminWindow(BoxLayout):
 
             idx += 1
         return _order_d
-
-    def remove_details_fields(self):
-        target = self.ids.ops_fields_d
-        target.clear_widgets()
-        crud_id = TextInput(hint_text='Detail ID', multiline=False, input_filter="int")
-        crud_submit = Button(text='Remove', size_hint_x=None, width=100,
-                             on_release=lambda x: self.delete_details(crud_id.text))
-
-        target.add_widget(crud_id)
-        target.add_widget(crud_submit)
-
-    def delete_details(self, id):
-        content = self.ids.scrn_order_d_contents
-        content.clear_widgets()
-        if id == '':
-            self.notify.add_widget(Label(text='[color=#FF0000][b]Detail ID is Required![/b][/color]', markup=True))
-            self.notify.open()
-            Clock.schedule_once(self.killswitch, 1)
-        else:
-            details = dict(self.get_details(id).items())
-            ids = details.get('id')
-            orderids = details.get('order_id')
-            x = False
-            if ids is not None:
-                id = int(id)
-                idlist = list(dict(ids).values())
-                orderlist = list(dict(orderids).values())
-                index = idlist.index(id)
-                x = idlist[index] == int(id) and orderlist[index] == int(self.current_order_id_details)
-            if not x:
-                self.notify.add_widget(Label(text='[color=#FF0000][b]Invalid detail ID![/b][/color]', markup=True))
-                self.notify.open()
-                Clock.schedule_once(self.killswitch, 1)
-            else:
-                query = 'DELETE FROM TRANS_DETAILS WHERE id=' + str(id)
-                self.cur.execute(query)
-                self.conn.commit()
-
-        details = self.get_order_details(self.current_order_id_details)
-        detailstable = DataTable(table=details)
-        content.add_widget(detailstable)
-        self.remove_details_fields()
 
     def show_all_orders(self):
         content = self.ids.scrn_orders_contents
@@ -1279,52 +1158,62 @@ class AdminWindow(BoxLayout):
 
         elif instance.text == 'Manage Orders':
             self.ids.scrn_mngr.current = 'scrn_orders'
-            content = self.ids.scrn_orders_contents
-            content.clear_widgets()
-            orders = self.get_orders()
-            orderstable = DataTable(table=orders)
-            content.add_widget(orderstable)
+
+        elif instance.text == 'Print':
+            self.ids.scrn_mngr.current = 'scrn_print'
 
         else:
-            self.details = self.get_all_details()
-            ids = list(self.details['id'].values())
-            self.dates = list()
-            self.order_prod_ids = list()
-            self.order_prod_names = list()
-            for x in range(len(ids)):
-                if self.details['date'][x] not in self.dates:
-                    self.dates.append(self.details['date'][x])
-                    print(self.dates)
-                if self.details['prod_id'][x] not in self.order_prod_ids:
-                    self.order_prod_ids.append(str(self.details['prod_id'][x]))
-
-                    try:
-                        self.order_prod_names.append(self.prodnames[self.prod_ids.index(self.details['prod_id'][x])])
-                    except():
-                        pass
-
-            product_code = []
-            product_name = []
-            query = 'SELECT * FROM PRODUCTS'
-            self.cur.execute(query)
-            products = self.cur.fetchall()
-            for product in products:
-                product_code.append(product[1])
-                name = product[2]
-                product_name.append(name)
             self.ids.ops_fields_stats.clear_widgets()
             self.ids.scrn_mngr.current = 'scrn_analysis'
 
     def print_fields(self):
-        target = self.ids.ops_fields_stats
+        target = self.ids.ops_fields_print
         target.clear_widgets()
         date = datetime.today().date().__str__().split('-')
+        button = Label(text=arabic_trans('الطلبات'), font_name='utils/STC',color=(.06, .45, .45, 1))
         daysin = TextInput(text=date[2], hint_text='day', multiline=False, input_filter="int", on_text_validate=lambda x: self.print_reciept(yearsin.text, monthsin.text, daysin.text))
         monthsin = TextInput(text=date[1], hint_text='month', multiline=False, input_filter="int")
         yearsin = TextInput(text=date[0], hint_text='year', multiline=False, input_filter="int")
         submit = Button(text='Print', size_hint_x=None, width=100, on_release=
         lambda x: self.print_reciept(yearsin.text, monthsin.text, daysin.text))
 
+        target.add_widget(button)
+        target.add_widget(yearsin)
+        target.add_widget(monthsin)
+        target.add_widget(daysin)
+        target.add_widget(submit)
+
+
+    def print_all_fields(self):
+        target = self.ids.ops_fields_print
+        target.clear_widgets()
+        date = datetime.today().date().__str__().split('-')
+        button = Label(text=arabic_trans('الاجمالي'), font_name='utils/STC',color=(.06, .45, .45, 1))
+        daysin = TextInput(text=date[2], hint_text='day', multiline=False, input_filter="int", on_text_validate=lambda x: self.print_reciept(yearsin.text, monthsin.text, daysin.text))
+        monthsin = TextInput(text=date[1], hint_text='month', multiline=False, input_filter="int")
+        yearsin = TextInput(text=date[0], hint_text='year', multiline=False, input_filter="int")
+        submit = Button(text='Print', size_hint_x=None, width=100, on_release=
+        lambda x: self.print_all(yearsin.text, monthsin.text, daysin.text))
+
+        target.add_widget(button)
+        target.add_widget(yearsin)
+        target.add_widget(monthsin)
+        target.add_widget(daysin)
+        target.add_widget(submit)
+
+
+    def print_split_fields(self):
+        target = self.ids.ops_fields_print
+        target.clear_widgets()
+        date = datetime.today().date().__str__().split('-')
+        button = Label(text=arabic_trans('تقسيمة المنتجات'), font_name='utils/STC',color=(.06, .45, .45, 1))
+        daysin = TextInput(text=date[2], hint_text='day', multiline=False, input_filter="int", on_text_validate=lambda x: self.print_split(yearsin.text, monthsin.text, daysin.text))
+        monthsin = TextInput(text=date[1], hint_text='month', multiline=False, input_filter="int")
+        yearsin = TextInput(text=date[0], hint_text='year', multiline=False, input_filter="int")
+        submit = Button(text='Print', size_hint_x=None, width=100, on_release=
+        lambda x: self.print_split(yearsin.text, monthsin.text, daysin.text))
+
+        target.add_widget(button)
         target.add_widget(yearsin)
         target.add_widget(monthsin)
         target.add_widget(daysin)
@@ -1440,6 +1329,169 @@ class AdminWindow(BoxLayout):
             else:
                 self.notify.add_widget(
                     Label(text='[color=#00FF00][b]Print Orders is Complete![/b][/color]', markup=True))
+                self.notify.open()
+                Clock.schedule_once(self.killswitch, 10)
+
+    def print_all(self, year, month, day):
+        if year == '' or month == '' or day == '':
+            self.notify.add_widget(
+                Label(text='[color=#FF0000][b]Please Enter Missing Information![/b][/color]', markup=True))
+            self.notify.open()
+            Clock.schedule_once(self.killswitch, 1)
+            return
+        x = True
+        if len(month) == 1:
+            month = '0' + month
+        if len(day) == 1:
+            day = '0' + day
+        date = year + '-' + month + '-' + day
+        if date not in self.dates:
+            self.notify.add_widget(Label(text='[color=#FF0000][b]Date is Invalid![/b][/color]', markup=True))
+            self.notify.open()
+            Clock.schedule_once(self.killswitch, 1)
+        else:
+            products = self.get_products()
+            prod_names = list(products['product_name'].values())
+            prod_ids = list(products['product_code'].values())
+
+            pcodes = []
+            names = []
+            quantitys = []
+            query = 'SELECT * FROM TRANS_DETAILS where date=\"' + date + '\"'
+            self.cur.execute(query)
+            prodssplit = self.cur.fetchall()
+            for prod in prodssplit:
+                pcodes.append(prod[2])
+                quantitys.append(prod[4])
+                names.append(prod_names[list(prod_ids).index(prod[2])])
+
+            statepcode = []
+            statename = []
+            statequantity = []
+            for i in range(len(pcodes)):
+                if pcodes[i] not in statepcode:
+                    statepcode.append(pcodes[i])
+                    statename.append(names[i])
+                    statequantity.append(quantitys[i])
+                else:
+                    index = statepcode.index(pcodes[i])
+                    statequantity[index] += quantitys[i]
+
+            if not os.path.isdir('all products'):
+                os.mkdir('all products')
+
+            document = Document()
+            font = document.styles['Normal'].font
+            font.name = 'STC Regular'
+
+            table = document.add_table(rows=1, cols=3)
+            hdr_cells = table.rows[0].cells
+            hdr_cells[0].text = 'كود'
+            hdr_cells[1].text = 'اسم الصنف'
+            hdr_cells[2].text = 'الكمية'
+
+            length = len(statepcode)
+
+            for i in range(length):
+                row_cells = table.add_row().cells
+                row_cells[0].text = str(statepcode[i])
+                row_cells[1].text = arabic_trans(statename[i])
+                row_cells[2].text = arabic_trans(str(statequantity[i]))
+
+            for row in table.rows:
+                row.height = Cm(0.1)
+
+            try:
+                document.save('all products/' + date + '.docx')
+
+            except:
+                x = False
+
+            if not x:
+                self.notify.add_widget(
+                    Label(text='[color=#FF0000][b]Close the open document to save![/b][/color]', markup=True))
+                self.notify.open()
+                Clock.schedule_once(self.killswitch, 10)
+            else:
+                self.notify.add_widget(
+                    Label(text='[color=#00FF00][b]Print products is Complete![/b][/color]', markup=True))
+                self.notify.open()
+                Clock.schedule_once(self.killswitch, 10)
+
+    def print_split(self, year, month, day):
+        if year == '' or month == '' or day == '':
+            self.notify.add_widget(
+                Label(text='[color=#FF0000][b]Please Enter Missing Information![/b][/color]', markup=True))
+            self.notify.open()
+            Clock.schedule_once(self.killswitch, 1)
+            return
+        x = True
+        if len(month) == 1:
+            month = '0' + month
+        if len(day) == 1:
+            day = '0' + day
+        date = year + '-' + month + '-' + day
+        if date not in self.dates:
+            self.notify.add_widget(Label(text='[color=#FF0000][b]Date is Invalid![/b][/color]', markup=True))
+            self.notify.open()
+            Clock.schedule_once(self.killswitch, 1)
+        else:
+            products = self.get_products()
+            prod_names = list(products['product_name'].values())
+            prod_ids = list(products['product_code'].values())
+
+            orderids = []
+            if not os.path.isdir('products\' split'):
+                os.mkdir('products\' split')
+
+            document = Document()
+            font = document.styles['Normal'].font
+            font.name = 'STC Regular'
+
+            table = document.add_table(rows=1, cols=4)
+            hdr_cells = table.rows[0].cells
+            hdr_cells[3].text = 'رقم الطلب'
+            hdr_cells[2].text = 'اسم الصنف'
+            hdr_cells[1].text = 'الكمية'
+            hdr_cells[0].text = 'ملحوظه'
+
+
+            query = 'SELECT * FROM TRANS_DETAILS where date=\"' + date + '\"'
+            self.cur.execute(query)
+            prodssplit = self.cur.fetchall()
+            for prod in prodssplit:
+                if prod[1] not in orderids:
+                    orderids.append(prod[1])
+
+            for orderid in orderids:
+                query = 'SELECT * FROM TRANS_DETAILS where date=\"' + date + '\" and order_id=' + str(orderid)
+                self.cur.execute(query)
+                orderdetails = self.cur.fetchall()
+                for detail in orderdetails:
+                    row_cells = table.add_row().cells
+                    row_cells[3].text = arabic_trans(str(detail[1]))
+                    row_cells[2].text = arabic_trans(prod_names[ prod_ids.index(detail[2]) ])
+                    row_cells[1].text = arabic_trans(str(detail[4]))
+                    row_cells[0].text = arabic_trans(detail[6])
+                row_cells = table.add_row().cells
+
+            for row in table.rows:
+                row.height = Cm(0.1)
+
+            try:
+                document.save('products\' split/' + date + '.docx')
+
+            except:
+                x = False
+
+            if not x:
+                self.notify.add_widget(
+                    Label(text='[color=#FF0000][b]Close the open document to save![/b][/color]', markup=True))
+                self.notify.open()
+                Clock.schedule_once(self.killswitch, 10)
+            else:
+                self.notify.add_widget(
+                    Label(text='[color=#00FF00][b]Print products is Complete![/b][/color]', markup=True))
                 self.notify.open()
                 Clock.schedule_once(self.killswitch, 10)
 # ----------------------------------------------------------------------------------
